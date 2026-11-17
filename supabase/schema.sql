@@ -1,0 +1,203 @@
+create extension if not exists "pgcrypto";
+
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  order_id text not null unique,
+  created_at timestamptz not null default now(),
+  nama text not null,
+  whatsapp text not null,
+  metode text not null check (metode in ('Pickup', 'Delivery')),
+  alamat text,
+  catatan text,
+  total integer not null check (total >= 0),
+  total_pcs integer not null check (total_pcs > 0),
+  items jsonb not null default '[]'::jsonb,
+  proof_data text,
+  status text not null default 'baru' check (status in ('baru', 'dibayar', 'selesai'))
+);
+
+create index if not exists orders_created_at_idx on public.orders (created_at desc);
+create index if not exists orders_status_idx on public.orders (status);
+create index if not exists orders_nama_idx on public.orders (lower(nama));
+
+alter table public.orders enable row level security;
+
+create table if not exists public.app_config (
+  key text primary key,
+  value text not null
+);
+
+alter table public.app_config enable row level security;
+
+insert into public.app_config (key, value)
+values ('admin_key', '831d639335095c5d8a51f126e54860f388001190')
+on conflict (key) do update set value = excluded.value;
+
+create or replace function public.admin_key_ok(p_key text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.app_config
+    where key = 'admin_key' and value = p_key
+  );
+$$;
+
+revoke all on function public.admin_key_ok(text) from public;
+
+create or replace function public.submit_order(p jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+begin
+  if coalesce(p ->> 'nama', '') = '' or coalesce(p ->> 'whatsapp', '') = '' then
+    return jsonb_build_object('ok', false, 'error', 'Data pesanan belum lengkap.');
+  end if;
+
+  if coalesce(p ->> 'order_id', '') = '' then
+    return jsonb_build_object('ok', false, 'error', 'Nomor pesanan tidak valid.');
+  end if;
+
+  insert into public.orders (
+    order_id, nama, whatsapp, metode, alamat, catatan, total, total_pcs, items, proof_data
+  )
+  values (
+    p ->> 'order_id',
+    p ->> 'nama',
+    p ->> 'whatsapp',
+    p ->> 'metode',
+    nullif(p ->> 'alamat', ''),
+    nullif(p ->> 'catatan', ''),
+    coalesce((p ->> 'total')::int, 0),
+    coalesce((p ->> 'total_pcs')::int, 1),
+    coalesce(p -> 'items', '[]'::jsonb),
+    nullif(p ->> 'proof_data', '')
+  )
+  returning id into v_id;
+
+  return jsonb_build_object('ok', true, 'id', v_id);
+exception
+  when others then
+    return jsonb_build_object('ok', false, 'error', sqlerrm);
+end;
+$$;
+
+create or replace function public.admin_orders(
+  p_key text,
+  p_search text default '',
+  p_metode text default '',
+  p_status text default '',
+  p_sort text default 'newest',
+  p_limit int default 25,
+  p_offset int default 0
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_rows jsonb;
+  v_count bigint;
+begin
+  if not public.admin_key_ok(p_key) then
+    return jsonb_build_object('ok', false, 'error', 'unauthorized');
+  end if;
+
+  select count(*)
+  into v_count
+  from public.orders o
+  where (coalesce(p_search, '') = ''
+      or o.nama ilike '%' || p_search || '%'
+      or o.order_id ilike '%' || p_search || '%'
+      or o.whatsapp ilike '%' || p_search || '%')
+    and (coalesce(p_metode, '') = '' or o.metode = p_metode)
+    and (coalesce(p_status, '') = '' or o.status = p_status);
+
+  select coalesce(jsonb_agg(to_jsonb(f) order by f.created_at desc), '[]'::jsonb)
+  into v_rows
+  from (
+    select o.*
+    from public.orders o
+    where (coalesce(p_search, '') = ''
+        or o.nama ilike '%' || p_search || '%'
+        or o.order_id ilike '%' || p_search || '%'
+        or o.whatsapp ilike '%' || p_search || '%')
+      and (coalesce(p_metode, '') = '' or o.metode = p_metode)
+      and (coalesce(p_status, '') = '' or o.status = p_status)
+    order by
+      case when coalesce(p_sort, 'newest') = 'oldest' then o.created_at end asc,
+      case when coalesce(p_sort, 'newest') <> 'oldest' then o.created_at end desc
+    limit greatest(1, least(coalesce(p_limit, 25), 5000))
+    offset greatest(0, coalesce(p_offset, 0))
+  ) f;
+
+  return jsonb_build_object('ok', true, 'count', v_count, 'rows', v_rows);
+end;
+$$;
+
+create or replace function public.admin_stats(p_key text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v jsonb;
+begin
+  if not public.admin_key_ok(p_key) then
+    return jsonb_build_object('ok', false, 'error', 'unauthorized');
+  end if;
+
+  select jsonb_build_object(
+    'ok', true,
+    'orders', count(*),
+    'pcs', coalesce(sum(total_pcs), 0),
+    'revenue', coalesce(sum(total), 0),
+    'pending', coalesce(sum(case when status = 'baru' then 1 else 0 end), 0),
+    'without_proof', coalesce(sum(case when proof_data is null then 1 else 0 end), 0)
+  )
+  into v
+  from public.orders;
+
+  return v;
+end;
+$$;
+
+create or replace function public.admin_set_status(p_key text, p_id uuid, p_status text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.admin_key_ok(p_key) then
+    return jsonb_build_object('ok', false, 'error', 'unauthorized');
+  end if;
+
+  if p_status not in ('baru', 'dibayar', 'selesai') then
+    return jsonb_build_object('ok', false, 'error', 'Status tidak valid.');
+  end if;
+
+  update public.orders
+  set status = p_status
+  where id = p_id;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'error', 'Pesanan tidak ditemukan.');
+  end if;
+
+  return jsonb_build_object('ok', true, 'status', p_status);
+end;
+$$;
+
+grant execute on function public.submit_order(jsonb) to anon, authenticated;
+grant execute on function public.admin_orders(text, text, text, text, text, int, int) to anon, authenticated;
+grant execute on function public.admin_stats(text) to anon, authenticated;
+grant execute on function public.admin_set_status(text, uuid, text) to anon, authenticated;
