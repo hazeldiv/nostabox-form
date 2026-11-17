@@ -51,7 +51,7 @@ export function PaymentProofField({ id, value, error, onChange }: PaymentProofFi
     <div>
       <FieldLabel htmlFor={id}>Bukti pembayaran</FieldLabel>
       <p id={`${id}-hint`} className="mt-1 text-[13px] leading-relaxed text-muted">
-        Unggah screenshot bukti transfer ({PAYMENT_PROOF_LIMITS.maxMb} MB maks) agar pesanan bisa
+        Upload screenshot bukti transfer ({PAYMENT_PROOF_LIMITS.maxMb} MB maks) agar pesanan bisa
         diproses.
       </p>
 

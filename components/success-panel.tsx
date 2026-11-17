@@ -145,7 +145,7 @@ export function SuccessPanel({ order, orderId, total, onReset }: SuccessPanelPro
           <RecapRow label="Alamat" value={order.alamat} />
         ) : null}
         {order.catatan ? <RecapRow label="Catatan" value={order.catatan} /> : null}
-        <RecapRow label="Bukti transfer" value="Sudah diunggah" />
+        <RecapRow label="Bukti transfer" value="Sudah diupload" />
       </dl>
 
       <p className="mt-3 rounded-control border border-success/25 bg-success/5 px-3.5 py-2.5 text-[13px] leading-relaxed text-success">

@@ -90,7 +90,7 @@ export const orderSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["bukti"],
-        message: "Unggah bukti pembayaran terlebih dahulu.",
+        message: "Upload bukti pembayaran terlebih dahulu.",
       });
     }
 

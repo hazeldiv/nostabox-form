@@ -44,7 +44,7 @@ export async function submitOrder(input: OrderDraft): Promise<SubmitOrderResult>
   const proof = order.bukti;
 
   if (!proof) {
-    return { status: "error", message: "Unggah bukti pembayaran terlebih dahulu." };
+    return { status: "error", message: "Upload bukti pembayaran terlebih dahulu." };
   }
 
   const now = new Date();

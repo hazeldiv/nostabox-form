@@ -118,7 +118,7 @@ begin
   end if;
 
   if coalesce(p ->> 'proof_data', '') = '' then
-    return jsonb_build_object('ok', false, 'error', 'Bukti pembayaran wajib diunggah.');
+    return jsonb_build_object('ok', false, 'error', 'Bukti pembayaran wajib diupload.');
   end if;
 
   v_ip := coalesce(nullif(p ->> 'ip', ''), 'unknown');
