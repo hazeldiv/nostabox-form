@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 
 import { PRODUCT } from "@/lib/config";
-import { formatWhatsapp } from "@/lib/format";
+import { formatWhatsappLocal } from "@/lib/format";
 import { STATUS_LABEL, type OrderRecord } from "@/lib/orders";
 
 function itemSummary(order: OrderRecord): string {
@@ -57,7 +57,7 @@ export async function buildOrderWorkbook(orders: OrderRecord[]): Promise<Blob> {
       created_at: wibDate(order.created_at),
       order_id: order.order_id,
       nama: order.nama,
-      whatsapp: formatWhatsapp(order.whatsapp),
+      whatsapp: formatWhatsappLocal(order.whatsapp),
       items: itemSummary(order),
       total_pcs: order.total_pcs,
       total: order.total,

@@ -231,7 +231,7 @@ export function PoForm() {
         <FormSection
           step={2}
           title="Detail pesanan"
-          description="Tiap item punya spesifikasi sendiri — tambahkan item baru untuk varian berbeda."
+          description="Tiap item punya spesifikasi sendiri, tambahkan item baru untuk varian berbeda."
         >
           <div className="space-y-3">
             {values.items.map((item, index) => (

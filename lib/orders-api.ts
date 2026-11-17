@@ -89,6 +89,17 @@ export async function setOrderStatus(id: string, status: OrderStatus): Promise<v
   unwrap<{ status: string }>(data);
 }
 
+export async function deleteOrder(id: string): Promise<void> {
+  const { data, error } = await getSupabase().rpc("admin_delete_order", {
+    p_key: adminKey(),
+    p_id: id,
+  });
+
+  if (error) throw new Error(error.message);
+
+  unwrap<{ order_id: string }>(data);
+}
+
 export type NewOrder = {
   orderId: string;
   nama: string;

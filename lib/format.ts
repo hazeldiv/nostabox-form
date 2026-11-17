@@ -38,6 +38,16 @@ export function formatWhatsapp(value: string): string {
   return `+62 ${grouped}`;
 }
 
+export function formatWhatsappLocal(value: string): string {
+  const digits = value.replace(/\D/g, "");
+
+  if (digits.startsWith("62")) return `0${digits.slice(2)}`;
+  if (digits.startsWith("0")) return digits;
+  if (digits.startsWith("8")) return `0${digits}`;
+
+  return digits;
+}
+
 export function whatsappHref(message?: string): string {
   const base = `https://wa.me/${CONTACT.phoneE164}`;
 

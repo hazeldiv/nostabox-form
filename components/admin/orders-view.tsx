@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
-import { Check, Copy, ImageOff, MessageCircle, Store, Truck, X } from "lucide-react";
+import { Check, Copy, ImageOff, MessageCircle, Store, Trash2, Truck, X } from "lucide-react";
 
-import { updateOrderStatus } from "@/app/actions/admin-orders";
+import { updateOrderStatus, removeOrder } from "@/app/actions/admin-orders";
 import { cn } from "@/lib/cn";
 import {
   customerWhatsappHref,
   formatRupiah,
-  formatWhatsapp,
+  formatWhatsappLocal,
   formatWibDateTime,
 } from "@/lib/format";
 import {
@@ -56,14 +56,21 @@ function itemLine(order: OrderRecord): string {
 export function OrdersView({ rows }: OrdersViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Record<string, OrderStatus>>({});
+  const [removed, setRemoved] = useState<string[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
   const closeRef = useRef<HTMLButtonElement>(null);
 
+  const visibleRows = useMemo(
+    () => rows.filter((row) => !removed.includes(row.id)),
+    [rows, removed],
+  );
+
   const selected = useMemo(
-    () => rows.find((row) => row.id === selectedId) ?? null,
-    [rows, selectedId],
+    () => visibleRows.find((row) => row.id === selectedId) ?? null,
+    [visibleRows, selectedId],
   );
 
   const statusOf = (order: OrderRecord): OrderStatus => overrides[order.id] ?? order.status;
@@ -104,6 +111,10 @@ export function OrdersView({ rows }: OrdersViewProps) {
     return () => window.clearTimeout(timer);
   }, [copied]);
 
+  useEffect(() => {
+    setConfirmDelete(false);
+  }, [selectedId]);
+
   function changeStatus(order: OrderRecord, next: OrderStatus) {
     const previous = statusOf(order);
 
@@ -124,6 +135,21 @@ export function OrdersView({ rows }: OrdersViewProps) {
     });
   }
 
+  function removeSelected(order: OrderRecord) {
+    startTransition(async () => {
+      const result = await removeOrder(order.id);
+
+      if (!result.ok) {
+        setToast(result.message);
+        return;
+      }
+
+      setRemoved((current) => [...current, order.id]);
+      setSelectedId(null);
+      setToast(`${order.order_id} deleted`);
+    });
+  }
+
   async function copyOrderId(orderId: string) {
     try {
       await navigator.clipboard.writeText(orderId);
@@ -133,7 +159,7 @@ export function OrdersView({ rows }: OrdersViewProps) {
     }
   }
 
-  if (rows.length === 0) {
+  if (visibleRows.length === 0) {
     return (
       <div className="mt-4 rounded-card border border-line bg-surface px-6 py-14 text-center">
         <p className="font-heading text-[18px] text-ink">No orders yet</p>
@@ -164,7 +190,7 @@ export function OrdersView({ rows }: OrdersViewProps) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((order) => (
+            {visibleRows.map((order) => (
               <tr
                 key={order.id}
                 onClick={() => setSelectedId(order.id)}
@@ -178,7 +204,7 @@ export function OrdersView({ rows }: OrdersViewProps) {
                   <p className="mt-0.5 text-[11px] tabular-nums text-muted">{order.order_id}</p>
                 </td>
                 <td className="px-3.5 py-3 align-top text-[13px] tabular-nums whitespace-nowrap text-ink-soft">
-                  {formatWhatsapp(order.whatsapp)}
+                  {formatWhatsappLocal(order.whatsapp)}
                 </td>
                 <td className="max-w-[240px] px-3.5 py-3 align-top text-[12px] leading-snug text-muted">
                   <span className="line-clamp-2">{itemLine(order)}</span>
@@ -217,7 +243,7 @@ export function OrdersView({ rows }: OrdersViewProps) {
       </div>
 
       <ul className="mt-4 space-y-2.5 lg:hidden">
-        {rows.map((order) => (
+        {visibleRows.map((order) => (
           <li key={order.id}>
             <button
               type="button"
@@ -404,7 +430,7 @@ export function OrdersView({ rows }: OrdersViewProps) {
                       WhatsApp
                     </p>
                     <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-ink">
-                      {formatWhatsapp(selected.whatsapp)}
+                      {formatWhatsappLocal(selected.whatsapp)}
                     </p>
                   </div>
                   <a
@@ -462,19 +488,58 @@ export function OrdersView({ rows }: OrdersViewProps) {
               </div>
             </div>
 
-            <div className="sticky bottom-0 border-t border-line bg-surface px-4 py-3 sm:px-5">
-              <button
-                type="button"
-                onClick={() => copyOrderId(selected.order_id)}
-                className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-line text-[13px] font-semibold text-ink transition-colors duration-200 hover:border-line-strong hover:bg-bg"
-              >
-                {copied ? (
-                  <Check aria-hidden className="size-4" strokeWidth={2.5} />
-                ) : (
-                  <Copy aria-hidden className="size-4" strokeWidth={2.5} />
-                )}
-                {copied ? "Order ID copied" : "Copy order ID"}
-              </button>
+            <div className="sticky bottom-0 space-y-2 border-t border-line bg-surface px-4 py-3 sm:px-5">
+              {confirmDelete ? (
+                <div className="rounded-control border border-danger/30 bg-danger/5 px-3.5 py-3">
+                  <p className="text-[13px] font-semibold leading-relaxed text-danger">
+                    Delete order {selected.order_id}? This cannot be undone.
+                  </p>
+                  <div className="mt-2.5 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      disabled={isPending}
+                      className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center rounded-control border border-line bg-surface text-[13px] font-semibold text-ink transition-colors duration-200 hover:border-line-strong disabled:cursor-wait disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSelected(selected)}
+                      disabled={isPending}
+                      className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-control bg-danger text-[13px] font-semibold text-white transition-colors duration-200 hover:bg-danger/90 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      <Trash2 aria-hidden className="size-3.5" strokeWidth={2.5} />
+                      {isPending ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyOrderId(selected.order_id)}
+                  className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-control border border-line text-[13px] font-semibold text-ink transition-colors duration-200 hover:border-line-strong hover:bg-bg"
+                >
+                  {copied ? (
+                    <Check aria-hidden className="size-4" strokeWidth={2.5} />
+                  ) : (
+                    <Copy aria-hidden className="size-4" strokeWidth={2.5} />
+                  )}
+                  {copied ? "Order ID copied" : "Copy order ID"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={isPending || confirmDelete}
+                  aria-label={`Delete order ${selected.order_id}`}
+                  className="inline-flex h-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-control border border-line px-3.5 text-[13px] font-semibold text-muted transition-colors duration-200 hover:border-danger/40 hover:bg-danger/5 hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Trash2 aria-hidden className="size-4" strokeWidth={2.5} />
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>

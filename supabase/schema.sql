@@ -197,7 +197,33 @@ begin
 end;
 $$;
 
+create or replace function public.admin_delete_order(p_key text, p_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order_id text;
+begin
+  if not public.admin_key_ok(p_key) then
+    return jsonb_build_object('ok', false, 'error', 'unauthorized');
+  end if;
+
+  delete from public.orders
+  where id = p_id
+  returning order_id into v_order_id;
+
+  if v_order_id is null then
+    return jsonb_build_object('ok', false, 'error', 'Pesanan tidak ditemukan.');
+  end if;
+
+  return jsonb_build_object('ok', true, 'order_id', v_order_id);
+end;
+$$;
+
 grant execute on function public.submit_order(jsonb) to anon, authenticated;
 grant execute on function public.admin_orders(text, text, text, text, text, int, int) to anon, authenticated;
 grant execute on function public.admin_stats(text) to anon, authenticated;
 grant execute on function public.admin_set_status(text, uuid, text) to anon, authenticated;
+grant execute on function public.admin_delete_order(text, uuid) to anon, authenticated;
