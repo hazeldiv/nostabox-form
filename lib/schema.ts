@@ -86,6 +86,14 @@ export const orderSchema = z
     website: z.string().optional(),
   })
   .superRefine((order, ctx) => {
+    if (!order.bukti) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["bukti"],
+        message: "Unggah bukti pembayaran terlebih dahulu.",
+      });
+    }
+
     if (order.metode === "Delivery" && (order.alamat ?? "").length < ORDER_LIMITS.alamatMin) {
       ctx.addIssue({
         code: "custom",

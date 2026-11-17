@@ -102,6 +102,7 @@ export async function deleteOrder(id: string): Promise<void> {
 
 export type NewOrder = {
   orderId: string;
+  ip: string;
   nama: string;
   whatsapp: string;
   metode: string;
@@ -117,13 +118,14 @@ export type NewOrder = {
     jumlah: number;
     subtotal: number;
   }>;
-  proofData: string | null;
+  proofData: string;
 };
 
 export async function insertOrder(order: NewOrder): Promise<void> {
   const { data, error } = await getSupabase().rpc("submit_order", {
     p: {
       order_id: order.orderId,
+      ip: order.ip,
       nama: order.nama,
       whatsapp: order.whatsapp,
       metode: order.metode,

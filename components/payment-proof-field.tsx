@@ -49,12 +49,10 @@ export function PaymentProofField({ id, value, error, onChange }: PaymentProofFi
 
   return (
     <div>
-      <FieldLabel htmlFor={id} optional>
-        Bukti pembayaran
-      </FieldLabel>
+      <FieldLabel htmlFor={id}>Bukti pembayaran</FieldLabel>
       <p id={`${id}-hint`} className="mt-1 text-[13px] leading-relaxed text-muted">
-        Unggah screenshot bukti transfer ({PAYMENT_PROOF_LIMITS.maxMb} MB maks). Bisa juga dikirim
-        ke WhatsApp admin setelah transfer.
+        Unggah screenshot bukti transfer ({PAYMENT_PROOF_LIMITS.maxMb} MB maks) agar pesanan bisa
+        diproses.
       </p>
 
       <div className="mt-2.5">

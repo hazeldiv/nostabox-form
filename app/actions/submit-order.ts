@@ -7,16 +7,14 @@ import { headers } from "next/headers";
 import { CUSTOM_COLOR } from "@/lib/config";
 import { lineTotal, orderTotal } from "@/lib/format";
 import { insertOrder } from "@/lib/orders-api";
+import { createRateLimiter } from "@/lib/rate-limit";
 import { orderSchema, type OrderDraft } from "@/lib/schema";
 
 export type SubmitOrderResult =
   | { status: "success"; orderId: string; total: number }
   | { status: "error"; message: string };
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 5;
-
-const recentRequests = new Map<string, number[]>();
+const burstLimiter = createRateLimiter(5, 60_000);
 
 function generateOrderId(now: Date): string {
   const wib = new Date(now.getTime() + 7 * 60 * 60 * 1000);
@@ -26,24 +24,7 @@ function generateOrderId(now: Date): string {
   return `NB-${stamp}-${suffix}`;
 }
 
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const timestamps = (recentRequests.get(key) ?? []).filter(
-    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS,
-  );
-
-  if (timestamps.length >= RATE_LIMIT_MAX) {
-    recentRequests.set(key, timestamps);
-    return true;
-  }
-
-  timestamps.push(now);
-  recentRequests.set(key, timestamps);
-
-  return false;
-}
-
-async function resolveClientKey(): Promise<string> {
+async function resolveClientIp(): Promise<string> {
   const headerList = await headers();
   const forwarded = headerList.get("x-forwarded-for");
 
@@ -60,6 +41,12 @@ export async function submitOrder(input: OrderDraft): Promise<SubmitOrderResult>
   }
 
   const order = parsed.data;
+  const proof = order.bukti;
+
+  if (!proof) {
+    return { status: "error", message: "Unggah bukti pembayaran terlebih dahulu." };
+  }
+
   const now = new Date();
   const orderId = generateOrderId(now);
   const total = orderTotal(order.items.map((item) => item.jumlah));
@@ -68,7 +55,9 @@ export async function submitOrder(input: OrderDraft): Promise<SubmitOrderResult>
     return { status: "success", orderId, total };
   }
 
-  if (isRateLimited(await resolveClientKey())) {
+  const ip = await resolveClientIp();
+
+  if (!burstLimiter.consume(ip)) {
     return {
       status: "error",
       message: "Terlalu banyak percobaan. Tunggu sebentar lalu kirim ulang pesananmu.",
@@ -78,6 +67,7 @@ export async function submitOrder(input: OrderDraft): Promise<SubmitOrderResult>
   try {
     await insertOrder({
       orderId,
+      ip,
       nama: order.nama,
       whatsapp: order.whatsapp,
       metode: order.metode,
@@ -93,10 +83,17 @@ export async function submitOrder(input: OrderDraft): Promise<SubmitOrderResult>
         jumlah: item.jumlah,
         subtotal: lineTotal(item.jumlah),
       })),
-      proofData: order.bukti?.dataUrl ?? null,
+      proofData: proof.dataUrl,
     });
   } catch (error) {
     console.error("[submit-order]", error);
+
+    if (error instanceof Error && error.message === "rate_limited") {
+      return {
+        status: "error",
+        message: "Terlalu banyak percobaan. Tunggu sebentar lalu kirim ulang pesananmu.",
+      };
+    }
 
     return {
       status: "error",

@@ -47,6 +47,57 @@ $$;
 
 revoke all on function public.admin_key_ok(text) from public;
 
+create table if not exists public.rate_limits (
+  bucket text primary key,
+  window_start timestamptz not null,
+  hits integer not null default 0
+);
+
+create index if not exists rate_limits_window_idx on public.rate_limits (window_start);
+
+alter table public.rate_limits enable row level security;
+
+create or replace function public.check_rate_limit(
+  p_bucket text,
+  p_max integer,
+  p_window_seconds integer
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_window timestamptz;
+  v_hits integer;
+begin
+  if coalesce(p_bucket, '') = '' or p_max is null or p_max < 1 or p_window_seconds is null or p_window_seconds < 1 then
+    return true;
+  end if;
+
+  v_window := to_timestamp(
+    (floor(extract(epoch from clock_timestamp()) / p_window_seconds) * p_window_seconds)::double precision
+  );
+
+  insert into public.rate_limits (bucket, window_start, hits)
+  values (p_bucket, v_window, 1)
+  on conflict (bucket) do update
+    set hits = case
+                 when public.rate_limits.window_start = excluded.window_start then public.rate_limits.hits + 1
+                 else 1
+               end,
+        window_start = excluded.window_start
+  returning hits into v_hits;
+
+  delete from public.rate_limits
+  where window_start < v_window - make_interval(secs => p_window_seconds * 2);
+
+  return v_hits <= p_max;
+end;
+$$;
+
+revoke all on function public.check_rate_limit(text, integer, integer) from public;
+
 create or replace function public.submit_order(p jsonb)
 returns jsonb
 language plpgsql
@@ -55,6 +106,8 @@ set search_path = public
 as $$
 declare
   v_id uuid;
+  v_ip text;
+  v_whatsapp text;
 begin
   if coalesce(p ->> 'nama', '') = '' or coalesce(p ->> 'whatsapp', '') = '' then
     return jsonb_build_object('ok', false, 'error', 'Data pesanan belum lengkap.');
@@ -62,6 +115,21 @@ begin
 
   if coalesce(p ->> 'order_id', '') = '' then
     return jsonb_build_object('ok', false, 'error', 'Nomor pesanan tidak valid.');
+  end if;
+
+  if coalesce(p ->> 'proof_data', '') = '' then
+    return jsonb_build_object('ok', false, 'error', 'Bukti pembayaran wajib diunggah.');
+  end if;
+
+  v_ip := coalesce(nullif(p ->> 'ip', ''), 'unknown');
+  v_whatsapp := p ->> 'whatsapp';
+
+  if not public.check_rate_limit('order:ip:' || v_ip, 10, 600) then
+    return jsonb_build_object('ok', false, 'error', 'rate_limited');
+  end if;
+
+  if not public.check_rate_limit('order:wa:' || v_whatsapp, 5, 1800) then
+    return jsonb_build_object('ok', false, 'error', 'rate_limited');
   end if;
 
   insert into public.orders (
@@ -77,7 +145,7 @@ begin
     coalesce((p ->> 'total')::int, 0),
     coalesce((p ->> 'total_pcs')::int, 1),
     coalesce(p -> 'items', '[]'::jsonb),
-    nullif(p ->> 'proof_data', '')
+    p ->> 'proof_data'
   )
   returning id into v_id;
 

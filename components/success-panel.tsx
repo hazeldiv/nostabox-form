@@ -53,9 +53,8 @@ export function SuccessPanel({ order, orderId, total, onReset }: SuccessPanelPro
         <div>
           <h2 className="text-[22px]">Pesanan diterima!</h2>
           <p className="mt-1.5 text-[14px] leading-relaxed text-muted">
-            {order.bukti
-              ? `Terima kasih, ${firstName}. Bukti transfermu sudah masuk dan akan diverifikasi admin. Pesananmu segera masuk antrean produksi.`
-              : `Terima kasih, ${firstName}. Selesaikan pembayaran, lalu kirim bukti transfer ke WhatsApp ${CONTACT.name} agar pesananmu masuk antrean produksi.`}
+            Terima kasih, {firstName}. Bukti transfermu sudah masuk dan akan diverifikasi admin.
+            Pesananmu segera masuk antrean produksi.
           </p>
         </div>
       </div>
@@ -104,9 +103,8 @@ export function SuccessPanel({ order, orderId, total, onReset }: SuccessPanelPro
           Pembayaran · Transfer {PAYMENT.bank}
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-muted">
-          {order.bukti
-            ? `Pastikan nominal transfer sesuai ${formatRupiah(total)}. Jika ada kekurangan, admin akan menghubungi kamu.`
-            : `Transfer sebesar ${formatRupiah(total)} ke rekening berikut, lalu kirim bukti transfer ke WhatsApp ${CONTACT.name}.`}
+          Pastikan nominal transfer sesuai {formatRupiah(total)}. Jika ada kekurangan, admin akan
+          menghubungi kamu.
         </p>
         <div className="mt-3 rounded-control bg-bg px-3.5 py-3">
           <dl>
@@ -147,22 +145,12 @@ export function SuccessPanel({ order, orderId, total, onReset }: SuccessPanelPro
           <RecapRow label="Alamat" value={order.alamat} />
         ) : null}
         {order.catatan ? <RecapRow label="Catatan" value={order.catatan} /> : null}
-        <RecapRow
-          label="Bukti transfer"
-          value={order.bukti ? "Sudah diunggah" : "Belum diunggah"}
-        />
+        <RecapRow label="Bukti transfer" value="Sudah diunggah" />
       </dl>
 
-      {order.bukti ? (
-        <p className="mt-3 rounded-control border border-success/25 bg-success/5 px-3.5 py-2.5 text-[13px] leading-relaxed text-success">
-          Bukti transfer kamu sudah kami terima. Admin akan memverifikasi pembayaran ini.
-        </p>
-      ) : (
-        <p className="mt-3 rounded-control border border-line bg-bg px-3.5 py-2.5 text-[13px] leading-relaxed text-muted">
-          Bukti transfer belum diunggah — kirim screenshot-nya ke WhatsApp {CONTACT.name} setelah
-          melakukan transfer.
-        </p>
-      )}
+      <p className="mt-3 rounded-control border border-success/25 bg-success/5 px-3.5 py-2.5 text-[13px] leading-relaxed text-success">
+        Bukti transfer kamu sudah kami terima. Admin akan memverifikasi pembayaran ini.
+      </p>
 
       <p className="mt-4 text-[13px] leading-relaxed text-muted">
         Ada pertanyaan? Hubungi{" "}

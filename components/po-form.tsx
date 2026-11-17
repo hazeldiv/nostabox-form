@@ -330,7 +330,7 @@ export function PoForm() {
         <FormSection
           step={4}
           title="Pembayaran"
-          description="Transfer sesuai total pesanan, lalu unggah bukti transfernya."
+          description="Transfer sesuai total pesanan, lalu unggah bukti transfernya. Bukti pembayaran wajib diisi."
         >
           <div className="rounded-control border border-line bg-bg px-3.5 py-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
