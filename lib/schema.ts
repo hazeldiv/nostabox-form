@@ -6,11 +6,9 @@ import {
   METHOD_VALUES,
   ORDER_LIMITS,
   PAYMENT_PROOF_LIMITS,
-  SCENTS,
   TEXTURE_VALUES,
   type Color,
   type Method,
-  type Scent,
   type Texture,
 } from "@/lib/config";
 import { normalizeWhatsapp } from "@/lib/format";
@@ -26,7 +24,6 @@ const orderItemSchema = z
       .trim()
       .max(ORDER_LIMITS.customColorMax, `Maksimal ${ORDER_LIMITS.customColorMax} karakter.`)
       .optional(),
-    aroma: z.enum(SCENTS, "Pilih salah satu aroma slime."),
     jumlah: z
       .number("Jumlah pesanan wajib berupa angka.")
       .int("Jumlah pesanan harus bilangan bulat.")
@@ -110,7 +107,6 @@ export type ItemDraft = {
   tekstur?: Texture;
   warna?: Color;
   warnaLainnya: string;
-  aroma?: Scent;
   jumlah: number;
 };
 
@@ -130,7 +126,6 @@ export function createItem(): ItemDraft {
     tekstur: undefined,
     warna: undefined,
     warnaLainnya: "",
-    aroma: undefined,
     jumlah: 1,
   };
 }

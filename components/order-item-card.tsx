@@ -10,10 +10,8 @@ import {
   COLOR_SWATCHES,
   CUSTOM_COLOR,
   ORDER_LIMITS,
-  SCENTS,
   TEXTURES,
   type Color,
-  type Scent,
   type Texture,
 } from "@/lib/config";
 import { formatRupiah, lineTotal } from "@/lib/format";
@@ -27,11 +25,6 @@ const colorOptions: ReadonlyArray<Option<Color>> = [
   })),
   { value: CUSTOM_COLOR, label: "Lainnya", icon: <CustomOptionIcon /> },
 ];
-
-const scentOptions: ReadonlyArray<Option<Scent>> = SCENTS.map((scent) => ({
-  value: scent,
-  label: scent,
-}));
 
 type OrderItemCardProps = {
   index: number;
@@ -121,22 +114,6 @@ export function OrderItemCard({
               />
             </div>
           ) : null}
-        </FieldGroup>
-
-        <FieldGroup id={`${prefix}-aroma`} legend="Aroma" error={errorFor("aroma")}>
-          <OptionGroup<Scent>
-            name={`${prefix}-aroma`}
-            layout="chips"
-            options={scentOptions}
-            value={item.aroma}
-            onChange={(value) => {
-              onChange("aroma", value);
-              onBlur("aroma");
-            }}
-            onBlur={() => onBlur("aroma")}
-            invalid={Boolean(errorFor("aroma"))}
-            describedBy={describedBy("aroma")}
-          />
         </FieldGroup>
 
         <div>

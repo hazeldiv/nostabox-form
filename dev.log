@@ -6,12 +6,11 @@
 - Local:         http://localhost:3000
 - Network:       http://172.16.0.2:3000
 - Environments: .env
-✓ Ready in 668ms
-✓ Running next.config.ts took 54ms
+✓ Ready in 2.1s
+✓ Running next.config.ts took 50ms
 - Experiments (use with caution):
   · serverActions
 
- GET / 200 in 355ms (next.js: 51ms, application-code: 304ms)
- GET /admin/e9o59d2bkwfj5q 404 in 1008ms (next.js: 917ms, application-code: 91ms)
- GET / 200 in 50ms (next.js: 1.8ms, application-code: 48ms)
+○ Compiling / ...
+ GET / 200 in 886ms (next.js: 560ms, application-code: 326ms)
 [?25h

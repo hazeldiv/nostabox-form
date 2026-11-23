@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: `${PRODUCT.eyebrow}`,
   description:
-    "Pre-order slime handmade Nostabox. Rp20.000 per pcs, ukuran 200 ml, custom warna dan aroma.",
+    "Pre-order slime handmade Nostabox. Rp20.000 per pcs, ukuran 200 ml, custom warna.",
   applicationName: PRODUCT.name,
   openGraph: {
     title: `${PRODUCT.eyebrow}`,

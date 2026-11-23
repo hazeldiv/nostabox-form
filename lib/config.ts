@@ -39,16 +39,7 @@ export const COLOR_SWATCHES: ReadonlyArray<{ value: BaseColor; swatch: string }>
   { value: "Hijau", swatch: "#7fb77e" },
 ];
 
-export const SCENTS = [
-  "Raspberry",
-  "Tutti Fruity",
-  "Melon",
-  "Vanilla",
-  "Lychee",
-  "Milky",
-  "Chocolate Chip",
-] as const;
-export type Scent = (typeof SCENTS)[number];
+export const SCENT_PLACEHOLDER = "-";
 
 export const METHOD_VALUES = ["Pickup", "Delivery"] as const;
 export type Method = (typeof METHOD_VALUES)[number];

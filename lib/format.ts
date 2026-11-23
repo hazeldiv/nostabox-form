@@ -1,4 +1,4 @@
-import { CONTACT, PRODUCT } from "@/lib/config";
+import { CONTACT, PRODUCT, SCENT_PLACEHOLDER } from "@/lib/config";
 
 const rupiah = new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -68,4 +68,10 @@ export function customerWhatsappHref(phone: string): string {
   const digits = phone.replace(/\D/g, "");
 
   return `https://wa.me/${digits.startsWith("62") ? digits : `62${digits.replace(/^0/, "")}`}`;
+}
+
+export function formatAroma(value: string | null | undefined): string {
+  const aroma = (value ?? "").trim();
+
+  return aroma === SCENT_PLACEHOLDER ? "" : aroma;
 }

@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 
 import { PRODUCT } from "@/lib/config";
-import { formatWhatsappLocal } from "@/lib/format";
+import { formatAroma, formatWhatsappLocal } from "@/lib/format";
 import { STATUS_LABEL, type OrderRecord } from "@/lib/orders";
 
 function itemSummary(order: OrderRecord): string {
@@ -10,7 +10,9 @@ function itemSummary(order: OrderRecord): string {
       const color =
         item.warna === "Lainnya" && item.warnaLainnya ? `Lainnya (${item.warnaLainnya})` : item.warna;
 
-      return `${item.jumlah}x ${item.tekstur} · ${color} · ${item.aroma}`;
+      return [`${item.jumlah}x ${item.tekstur}`, color, formatAroma(item.aroma)]
+        .filter(Boolean)
+        .join(" · ");
     })
     .join("\n");
 }

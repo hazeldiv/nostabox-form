@@ -22,8 +22,7 @@ export function SiteHeader() {
       </p>
       <h1 className="mt-4 text-[32px] leading-[1.1] sm:text-[42px]">{PRODUCT.tagline}</h1>
       <p className="mt-3 max-w-[44ch] text-[15px] leading-relaxed text-muted sm:text-base">
-        Slime handmade yang dibuat satu per satu sesuai pesananmu. Pilih add on, warna, dan
-        aroma.
+        Slime handmade yang dibuat satu per satu sesuai pesananmu. Pilih add on dan warna.
       </p>
       <a
         href={whatsappHref(`Halo ${CONTACT.name}, saya mau tanya soal pre-order Nostabox Slime.`)}

@@ -78,7 +78,7 @@ export function SuccessPanel({ order, orderId, total, onReset }: SuccessPanelPro
             <li key={index} className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-[14px] font-semibold leading-snug text-ink">
-                  {item.tekstur} · {itemColor(item)} · {item.aroma}
+                  {[item.tekstur, itemColor(item)].filter(Boolean).join(" · ")}
                 </p>
                 <p className="mt-0.5 text-[12px] tabular-nums text-muted">
                   {item.jumlah} pcs × {formatRupiah(PRODUCT.price)}

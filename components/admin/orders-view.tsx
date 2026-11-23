@@ -8,6 +8,7 @@ import { updateOrderStatus, removeOrder } from "@/app/actions/admin-orders";
 import { cn } from "@/lib/cn";
 import {
   customerWhatsappHref,
+  formatAroma,
   formatRupiah,
   formatWhatsappLocal,
   formatWibDateTime,
@@ -48,7 +49,9 @@ function itemLine(order: OrderRecord): string {
       const color =
         item.warna === "Lainnya" && item.warnaLainnya ? `Lainnya (${item.warnaLainnya})` : item.warna;
 
-      return `${item.jumlah}× ${item.tekstur} · ${color} · ${item.aroma}`;
+      return [`${item.jumlah}× ${item.tekstur}`, color, formatAroma(item.aroma)]
+        .filter(Boolean)
+        .join(" · ");
     })
     .join(" • ");
 }
@@ -405,11 +408,15 @@ export function OrdersView({ rows }: OrdersViewProps) {
                     >
                       <div className="min-w-0">
                         <p className="text-[13px] font-semibold leading-snug text-ink">
-                          {item.tekstur} ·{" "}
-                          {item.warna === "Lainnya" && item.warnaLainnya
-                            ? `Lainnya (${item.warnaLainnya})`
-                            : item.warna}{" "}
-                          · {item.aroma}
+                          {[
+                            item.tekstur,
+                            item.warna === "Lainnya" && item.warnaLainnya
+                              ? `Lainnya (${item.warnaLainnya})`
+                              : item.warna,
+                            formatAroma(item.aroma),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
                         </p>
                         <p className="mt-0.5 text-[11px] tabular-nums text-muted">
                           {item.jumlah} pcs

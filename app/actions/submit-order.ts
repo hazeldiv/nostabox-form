@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 
 import { headers } from "next/headers";
 
-import { CUSTOM_COLOR } from "@/lib/config";
+import { CUSTOM_COLOR, SCENT_PLACEHOLDER } from "@/lib/config";
 import { lineTotal, orderTotal } from "@/lib/format";
 import { insertOrder } from "@/lib/orders-api";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -79,7 +79,7 @@ export async function submitOrder(input: OrderDraft): Promise<SubmitOrderResult>
         tekstur: item.tekstur,
         warna: item.warna,
         warnaLainnya: item.warna === CUSTOM_COLOR ? item.warnaLainnya ?? "" : "",
-        aroma: item.aroma,
+        aroma: SCENT_PLACEHOLDER,
         jumlah: item.jumlah,
         subtotal: lineTotal(item.jumlah),
       })),
