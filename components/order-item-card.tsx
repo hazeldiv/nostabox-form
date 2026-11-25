@@ -23,7 +23,7 @@ const colorOptions: ReadonlyArray<Option<Color>> = [
     label: color.value,
     swatch: color.swatch,
   })),
-  { value: CUSTOM_COLOR, label: "Lainnya", icon: <CustomOptionIcon /> },
+  // { value: CUSTOM_COLOR, label: "Lainnya", icon: <CustomOptionIcon /> },
 ];
 
 type OrderItemCardProps = {
