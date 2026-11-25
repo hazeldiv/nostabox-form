@@ -46,6 +46,7 @@ export function OrderItemCard({
   onRemove,
 }: OrderItemCardProps) {
   const prefix = `item-${index}`;
+  item.tekstur = TEXTURES[0].value
 
   function describedBy(field: keyof ItemDraft): string | undefined {
     return errorFor(field) ? `${prefix}-${field}-error` : undefined;
@@ -68,7 +69,7 @@ export function OrderItemCard({
       </div>
 
       <div className="mt-4 space-y-5">
-        <FieldGroup id={`${prefix}-tekstur`} legend="Add on" error={errorFor("tekstur")}>
+        <FieldGroup id={`${prefix}-tekstur`} legend="Add on" error={errorFor("tekstur")} className="hidden">
           <OptionGroup<Texture>
             name={`${prefix}-tekstur`}
             layout="cards"

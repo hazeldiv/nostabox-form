@@ -26,13 +26,14 @@ export const TEXTURES: ReadonlyArray<{
   },
 ];
 
-export const COLOR_VALUES = ["Merah", "Biru", "Kuning", "Hijau", "Lainnya"] as const;
+export const COLOR_VALUES = ["Putih", "Merah", "Biru", "Kuning", "Hijau", "Lainnya"] as const;
 export type Color = (typeof COLOR_VALUES)[number];
 export type BaseColor = Exclude<Color, "Lainnya">;
 
 export const CUSTOM_COLOR: Color = "Lainnya";
 
 export const COLOR_SWATCHES: ReadonlyArray<{ value: BaseColor; swatch: string }> = [
+  { value: "Putih", swatch: "#f0f0f0" },
   { value: "Merah", swatch: "#e4685a" },
   { value: "Biru", swatch: "#6fa8dc" },
   { value: "Kuning", swatch: "#efc44b" },
