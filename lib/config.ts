@@ -1,6 +1,6 @@
 export const PRODUCT = {
   name: "Nostabox Slime",
-  price: 20000,
+  price: 25000,
   size: "200 ml",
   tagline: "A little box of happy things.",
   eyebrow: "Pre-Order Slime by Nostabox",
